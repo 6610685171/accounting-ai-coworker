@@ -21,7 +21,7 @@ import { LocaleEnum, switchLanguage } from '@/i18n';
 import { SITE_URL } from '@/lib';
 import { useAuthStore } from '@/store/authStore';
 import { useInstallationStore } from '@/store/installationStore';
-import { LogOut, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { createRef, RefObject, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -279,6 +279,7 @@ export default function SettingGeneral() {
               <Settings className="h-4 w-4 text-button-primary-icon-default" />
               {t('setting.manage')}
             </Button>
+            {/* 
             <Button
               variant="outline"
               size="sm"
@@ -295,6 +296,7 @@ export default function SettingGeneral() {
               <LogOut className="h-4 w-4 text-button-tertiery-text-default" />
               {t('setting.log-out')}
             </Button>
+            */}
           </div>
         </div>
 
