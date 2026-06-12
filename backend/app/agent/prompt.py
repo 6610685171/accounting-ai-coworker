@@ -335,7 +335,7 @@ You are an Accounting AI Copilot. Your primary task is to process monthly billin
 **Step 0 — Fetch Images**
 - Execute: `python3 {scripts_dir}/fetch_from_downloads.py`
 - This script scans `~/Downloads/` for folders matching LINE album name patterns:
-  - Electricity: "DD/M/YYYY" format (e.g. "29/5/2569")  
+  - Electricity: "DD/M/YYYY" format (e.g. "29/5/2569")
   - Water: "DD/M/YYYY #1" format (e.g. "29/5/2569 #1")
 - Images are resized/enhanced and moved to `{copilot_data_dir}/meter-photos/processed/YYYY-MM/`
 - Output: list of processed files with shop_id and unit_type
