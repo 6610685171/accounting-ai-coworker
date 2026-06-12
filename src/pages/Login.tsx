@@ -213,6 +213,13 @@ export default function Login() {
     [location.pathname, handleLoginByStack, handleGetToken, setIsLoading]
   );
 
+  // Auto login for local mode on mount
+  useEffect(() => {
+    if (IS_LOCAL_MODE) {
+      handleAutoLogin();
+    }
+  }, []);
+
   // Listen for direct token callback from Electron (eigent.ai login redirect)
   useEffect(() => {
     const handleTokenReceived = async (_event: any, token: string) => {
