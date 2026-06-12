@@ -24,6 +24,7 @@ export enum LocaleEnum {
   German = 'de',
   Korean = 'ko',
   Japanese = 'ja',
+  Thai = 'th',
   French = 'fr',
   Russian = 'ru',
   Italian = 'it',

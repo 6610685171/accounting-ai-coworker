@@ -21,6 +21,7 @@ import it from './it';
 import ja from './ja/index';
 import ko from './ko';
 import ru from './ru';
+import th from './th/index';
 import zh_Hans from './zh-Hans/index';
 import zh_Hant from './zh-Hant/index';
 
@@ -44,6 +45,9 @@ export const resources = {
     translation: de,
   },
   fr: {
+    th: {
+      translation: th,
+    },
     translation: fr,
   },
   ru: {

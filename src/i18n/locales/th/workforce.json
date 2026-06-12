@@ -1,0 +1,20 @@
+{
+  "your-ai-workforce": "Your AI Workforce (ภาษาไทย)",
+  "new-worker": "New Worker Agent (ภาษาไทย)",
+  "edit": "Edit (ภาษาไทย)",
+  "configure-mcp-server": "Configure MCP Server (ภาษาไทย)",
+  "add-your-agent": "Add Your Agent (ภาษาไทย)",
+  "cancel": "Cancel (ภาษาไทย)",
+  "save-changes": "Save changes (ภาษาไทย)",
+  "description-optional": "Description (Optional) (ภาษาไทย)",
+  "agent-tool": "Agent Tool (ภาษาไทย)",
+  "share": "Share (ภาษาไทย)",
+  "advanced-model-config": "Advanced Model Configuration (ภาษาไทย)",
+  "use-custom-model": "Use custom model configuration (ภาษาไทย)",
+  "model-platform": "Model Platform (ภาษาไทย)",
+  "select-platform": "Select platform (ภาษาไทย)",
+  "model-type": "Model Type (ภาษาไทย)",
+  "model-type-placeholder": "e.g., gpt-4o-mini (ภาษาไทย)",
+  "worker-name-cannot-be-empty": "Worker name cannot be empty (ภาษาไทย)",
+  "worker-name-already-exists": "Worker name already exists (ภาษาไทย)"
+}
