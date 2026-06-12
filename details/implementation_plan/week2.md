@@ -1,18 +1,17 @@
 # AI Accounting Copilot: Week 2 Implementation Plan
 
-This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and integrates the refined prompt logic to ensure smooth, autonomous execution with a single, user-friendly human-in-the-loop checkpoint.
+This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and integrates the refined prompt logic to ensure smooth, autonomous batch execution with a single, user-friendly human-in-the-loop checkpoint.
 
 ---
 
 ## 📌 User Review Required
 > [!IMPORTANT]
-> - **Suggestion Prompt Logic:** Please review the revised English prompt in Phase 1. It is designed to run autonomously without pausing at every step, only stopping at the end to present the summary table in Thai.
+> - **Suggestion Prompt Logic:** Please review the revised English prompt in Phase 1. It is designed to run autonomously and process all images in a batch. If any image is unreadable, it will **skip** it and report it at the end, preventing the entire workflow from halting.
 
 ## ✅ Open Questions (Answered)
-1. **Human-in-the-loop เยอะไปไหม?**
-   * **คำตอบ:** ใช่ครับ การให้ AI หยุดรอทุกขั้นตอนจะทำให้เสียเวลาและจุกจิกเกินไป แผนดั้งเดิมของเรา (`detail_timeline.md`) ระบุให้มี Gate 1 แค่จุดเดียวคือ "หลัง OCR & กรอก Excel เสร็จ" ดังนั้นผมปรับ Prompt ให้รันรวดเดียวตั้งแต่ขั้น 1-4 แล้วค่อยมาสรุปตารางให้ผู้ใช้กดยืนยันทีเดียวจบครับ (ยกเว้นกรณีภาพเบลออ่านไม่ออก ค่อยหยุดถาม)
-2. **ควรเขียน Prompt เป็นภาษาไทยหรืออังกฤษ?**
-   * **คำตอบ:** **ควรเขียนโครงสร้างคำสั่ง (Logic) เป็นภาษาอังกฤษ แต่บังคับ Output เป็นภาษาไทยครับ** เพราะ AI ทุกตัวบนโลก (รวมถึงในแพลตฟอร์ม Eigent) ถูกเทรนด้วยภาษาอังกฤษเป็นหลัก การสั่งงานแบบมี Logic ซับซ้อน (เช่น การย้ายโฟลเดอร์, ลำดับการทำ Excel, เงื่อนไข QC) ภาษาอังกฤษจะทำให้ AI ทำตามได้เป๊ะที่สุดและไม่หลุดโฟกัส แต่เราจะใส่คำสั่งบรรทัดสุดท้ายตัวใหญ่ๆ ว่า **"All chat responses and summaries MUST be in Thai"** เพื่อให้การสื่อสารกับเราเป็นภาษาไทยทั้งหมดครับ
+1. **ถ้ารูปอ่านไม่ออกให้ Skip แล้วไปสรุปตอนจบดีกว่าไหม?**
+   * **คำตอบ:** **เป็นไอเดียที่ดีมากและ User-friendly กว่ามากๆ ครับ!** ถ้าเราให้ระบบหยุดทุกครั้งที่เจอรูปเบลอ การประมวลผลรูปอื่นๆ ที่เหลือก็จะถูกเบรกไปด้วย (Batch processing หยุดชะงัก) 
+   * **วิธีแก้:** ผมได้ปรับ Prompt ใน Phase 1 ใหม่ โดยสั่งให้ AI: "ถ้ารูปไหนอ่านไม่ออก (Confidence = Low) ให้ข้ามรูปนั้นไปก่อน (Skip) แล้วทำรูปอื่นต่อไปจนเสร็จ จากนั้นค่อยเอาชื่อห้องที่อ่านไม่ออกมาลิสต์สรุปให้ User ดูในตอนท้ายสุด" เพื่อให้ User เลือกว่าจะพิมพ์เลขบอก หรือจะโยนรูปใหม่เข้าไปครับ
 
 ---
 
@@ -26,7 +25,7 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
      ```json
      {
        "monthly-calc": "คำนวณบิลเดือนนี้",
-       "monthly-calc-prompt": "You are an Accounting AI Copilot. Execute the monthly billing process autonomously. Do NOT pause between steps unless an error requires user input.\n\n**Step 1 — Prepare Images**\n- Execute `scripts/process_inbox.py` to resize images to max 1024x1024px, extract Shop ID/unit type from filenames, and move them to `copilot_data/meter-photos/processed/YYYY-MM/`.\n\n**Step 2 — OCR (Meter Reading)**\n- Read images in the processed folder. Extract to JSON ONLY: `{\"shop_id\": \"...\", \"reading\": 1234, \"unit\": \"water\"|\"electric\", \"confidence\": \"high\"|\"low\"}`.\n- IF confidence is \"low\", PAUSE immediately, output in Thai: \"รูปห้อง [shop_id] อ่านไม่ออก รบกวนส่งรูปมาอีกครั้งนะคะ\" (หรือเจนคำตอบให้userเองได้เลย) and wait for user.\n\n**Step 3 — Excel Update (Strict Order)**\n- Open `copilot_data/excel-files/template/รายงาน...xlsx`. For each shop:\n  1. COPY value from 'Current Meter' to 'Previous Meter'.\n  2. ENTER the new reading from OCR into 'Current Meter'.\n  3. EMBED the resized meter photo in the corresponding row.\n- Save as: `copilot_data/excel-files/monthly/รายงาน_[YYYY-MM].xlsx`.\n\n**Step 4 — QC & Validation**\n- Execute `scripts/recalc.py` to check for `#REF!` or `#VALUE!`.\n- Verify: New Meter > Previous Meter, and Usage is between 1 and 500.\n\n**Step 5 — Final Summary**\n- Output a summary table showing: ห้อง | มิเตอร์เก่า | มิเตอร์ใหม่ | ใช้ไป | ประเภท | สถานะ (✅ ปกติ / ⚠️ ผิดปกติ)\n- Ask the user to verify the Excel file and confirm.\n\nCRITICAL: All your chat messages, step summaries, and outputs MUST be in Thai language."
+       "monthly-calc-prompt": "You are an Accounting AI Copilot. Execute the monthly billing process autonomously. Do NOT pause between steps. Process all files in a batch.\n\n**Step 1 — Prepare Images**\n- Execute `scripts/process_inbox.py` to resize images to max 1024x1024px, extract Shop ID/unit type from filenames, and move them to `copilot_data/meter-photos/processed/YYYY-MM/`.\n\n**Step 2 — OCR (Meter Reading)**\n- Read images in the processed folder. Extract to JSON ONLY: `{\"shop_id\": \"...\", \"reading\": 1234, \"unit\": \"water\"|\"electric\", \"confidence\": \"high\"|\"low\"}`.\n- IF confidence is \"low\", SKIP Step 3 for this image, mark its status as 'Failed (Unreadable)', and continue processing the rest.\n\n**Step 3 — Excel Update (Strict Order)**\n- Open `copilot_data/excel-files/template/รายงาน...xlsx`. For each successfully read shop:\n  1. COPY value from 'Current Meter' to 'Previous Meter'.\n  2. ENTER the new reading from OCR into 'Current Meter'.\n  3. EMBED the resized meter photo in the corresponding row.\n- Save as: `copilot_data/excel-files/monthly/รายงาน_[YYYY-MM].xlsx`.\n\n**Step 4 — QC & Validation**\n- Execute `scripts/recalc.py` to check for `#REF!` or `#VALUE!`.\n- Verify: New Meter > Previous Meter, and Usage is between 1 and 500.\n\n**Step 5 — Final Summary**\n- Output a summary table showing: ห้อง | มิเตอร์เก่า | มิเตอร์ใหม่ | ใช้ไป | ประเภท | สถานะ (✅ ปกติ / ⚠️ ผิดปกติ / ❌ อ่านไม่ออก ข้ามการบันทึก)\n- For any shop with status ❌, ask the user to manually provide the reading or upload a new photo.\n- Ask the user to verify the Excel file and confirm before proceeding.\n\nCRITICAL: All your chat messages, step summaries, and outputs MUST be in Thai language."
      }
      ```
 
@@ -55,11 +54,11 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
 
 1. **Execution Flow:**
    - User clicks the Suggestion Prompt.
-   - Agent dynamically invokes Python tools, reads files, and updates the Excel.
-   - Human reviews the final Thai summary table in the chat and checks the saved Excel file.
+   - Agent dynamically invokes Python tools, reads files, and updates the Excel for readable images.
+   - Human reviews the final Thai summary table in the chat, provides missing readings for skipped images, and checks the saved Excel file.
 
 **Testing (Phase 3):**
-- *End-to-End Manual Test:* Drop 2 sample meter photos (one clear, one intentionally blurry) into the inbox. Click the suggestion prompt. Verify that:
-  1. The blurry image triggers a chat warning in Thai.
-  2. The clear image gets processed, Excel is updated (old meter moved, new meter entered, image embedded), and QC passes without formula errors.
-  3. The final summary table is presented in Thai, awaiting user confirmation.
+- *End-to-End Manual Test:* Drop 3 sample meter photos (two clear, one intentionally blurry) into the inbox. Click the suggestion prompt. Verify that:
+  1. The workflow processes all 3 images without stopping.
+  2. The 2 clear images get processed into Excel correctly.
+  3. The final summary table in the chat shows the 2 successful updates and lists the 1 blurry image as "❌ อ่านไม่ออก" asking for user input.
