@@ -161,6 +161,21 @@ export default function Workflow({
         log: [],
         activeWebviewIds: [],
       },
+      {
+        tasks: [],
+        agent_id: 'accounting_agent',
+        name: 'Accounting Copilot',
+        tools: [
+          'Excel Toolkit',
+          'Screenshot Toolkit',
+          'Human Toolkit',
+          'Terminal Toolkit',
+          'Skill Toolkit',
+        ],
+        type: 'accounting_agent',
+        log: [],
+        activeWebviewIds: [],
+      },
     ],
     []
   );

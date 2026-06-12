@@ -48,6 +48,8 @@
   "settings": "การตั้งค่า",
   "general": "ทั่วไป",
   "workers": "ผู้ช่วยงาน",
+  "monthly-calc": "คำนวณบิลเดือนนี้",
+  "monthly-calc-prompt": "รันกระบวนการทำบิลประจำเดือน {CURRENT_MONTH} กรุณาเริ่มได้เลย",
   "triggers": "ทริกเกอร์",
   "new-project": "โครงการใหม่",
   "welcome": "ยินดีต้อนรับ",

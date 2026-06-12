@@ -48,6 +48,8 @@
   "settings": "Settings",
   "general": "General",
   "workers": "Workers",
+  "monthly-calc": "Calculate this month's bills",
+  "monthly-calc-prompt": "Run the monthly billing process for {CURRENT_MONTH}. Please start now.",
   "triggers": "Triggers",
   "new-project": "New Project",
   "welcome": "Welcome",

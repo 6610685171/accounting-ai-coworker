@@ -1423,6 +1423,16 @@ export default function ChatBox(): JSX.Element {
                 <div className="mr-2 flex flex-col items-center gap-2">
                   {[
                     {
+                      label: t('layout.monthly-calc'),
+                      message: t('layout.monthly-calc-prompt').replace(
+                        '{CURRENT_MONTH}',
+                        new Date().toLocaleDateString('th-TH', {
+                          month: 'long',
+                          year: 'numeric',
+                        })
+                      ),
+                    },
+                    {
                       label: t('layout.it-ticket-creation'),
                       message: t('layout.it-ticket-creation-message'),
                     },

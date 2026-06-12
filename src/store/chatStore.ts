@@ -1122,6 +1122,7 @@ const chatStore = (initial?: Partial<ChatStore>) =>
             document_agent: 'Document Agent',
             multi_modal_agent: 'Multi Modal Agent',
             social_media_agent: 'Social Media Agent',
+            accounting_agent: 'Accounting Copilot',
           };
 
           /**

@@ -12,7 +12,14 @@
 // limitations under the License.
 // ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
 
-import { Bird, CodeXml, FileText, Globe, Image } from 'lucide-react';
+import {
+  Bird,
+  Calculator,
+  CodeXml,
+  FileText,
+  Globe,
+  Image,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export type WorkflowAgentType =
@@ -20,7 +27,8 @@ export type WorkflowAgentType =
   | 'browser_agent'
   | 'document_agent'
   | 'multi_modal_agent'
-  | 'social_media_agent';
+  | 'social_media_agent'
+  | 'accounting_agent';
 
 export interface AgentDisplayInfo {
   name: string;
@@ -78,6 +86,15 @@ export const agentMap: Record<WorkflowAgentType, AgentDisplayInfo> = {
     borderColor: 'border-violet-700',
     bgColorLight: 'bg-purple-50',
   },
+  accounting_agent: {
+    name: 'Accounting Copilot',
+    icon: <Calculator size={16} className="text-text-primary" />,
+    textColor: 'text-orange-700',
+    bgColor: 'bg-orange-600',
+    shapeColor: 'bg-orange-300',
+    borderColor: 'border-orange-600',
+    bgColorLight: 'bg-orange-100',
+  },
 };
 
 /** Ordered list of workflow agents (id + name + icon) for use in skill scope and elsewhere. */
@@ -110,6 +127,11 @@ export const WORKFLOW_AGENT_LIST: {
     id: 'social_media_agent',
     name: agentMap.social_media_agent.name,
     icon: agentMap.social_media_agent.icon,
+  },
+  {
+    id: 'accounting_agent',
+    name: agentMap.accounting_agent.name,
+    icon: agentMap.accounting_agent.icon,
   },
 ];
 

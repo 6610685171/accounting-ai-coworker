@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
+# Add custom bin paths
+export PATH="$PATH:$HOME/.eigent/bin"
+
 npx lint-staged
 
 # Run Python pre-commit checks if backend files are staged

@@ -321,6 +321,7 @@ class Agents(str, Enum):
     multi_modal_agent = "multi_modal_agent"
     social_media_agent = "social_media_agent"
     mcp_agent = "mcp_agent"
+    accounting_agent = "accounting_agent"
 
 
 class TaskLock:

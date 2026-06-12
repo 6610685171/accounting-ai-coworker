@@ -155,7 +155,8 @@ declare global {
     | 'browser_agent'
     | 'document_agent'
     | 'multi_modal_agent'
-    | 'social_media_agent';
+    | 'social_media_agent'
+    | 'accounting_agent';
 
   interface AgentNameMap {
     developer_agent: 'Developer Agent';
@@ -163,6 +164,7 @@ declare global {
     document_agent: 'Document Agent';
     multi_modal_agent: 'Multi Modal Agent';
     social_media_agent: 'Social Media Agent';
+    accounting_agent: 'Accounting Copilot';
   }
   type WorkspaceType =
     | 'workflow'
@@ -171,6 +173,7 @@ declare global {
     | 'document_agent'
     | 'multi_modal_agent'
     | 'social_media_agent'
+    | 'accounting_agent'
     | null;
 }
 

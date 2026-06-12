@@ -12,6 +12,7 @@
 # limitations under the License.
 # ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
 
+from app.agent.factory.accounting import accounting_agent
 from app.agent.factory.browser import browser_agent
 from app.agent.factory.developer import developer_agent
 from app.agent.factory.document import document_agent
@@ -30,4 +31,5 @@ __all__ = [
     "question_confirm_agent",
     "social_media_agent",
     "task_summary_agent",
+    "accounting_agent",
 ]
