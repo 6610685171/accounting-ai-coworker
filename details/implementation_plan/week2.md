@@ -1,6 +1,6 @@
 # AI Accounting Copilot: Week 2 Implementation Plan
 
-This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and addresses the questions regarding token optimization, Quality Control (QC), and UI Suggestion Prompts.
+This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and integrates the detailed business logic and specific requirements found in `detail_timeline.md`.
 
 ---
 
@@ -11,11 +11,11 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
 
 ## ✅ Open Questions (Answered)
 1. **เรื่องการย่อรูป (Resize) เพื่อประหยัด Token:**
-   * **คำตอบ:** ควรทำครับ! รูปถ่ายมือถือมักจะใหญ่เกินความจำเป็น การย่อรูป (เช่น ให้ด้านยาวไม่เกิน 1024px) จะช่วยประหยัด Token และทำให้ API ตอบสนองไวขึ้นมาก เราจะใช้สคริปต์ Python สั้นๆ ทำขั้นตอนนี้ก่อนส่งให้ AI
+   * **คำตอบ:** ควรทำครับ! เราจะใช้สคริปต์ Python สั้นๆ ทำขั้นตอนนี้ก่อนส่งให้ AI เพื่อลดขนาดภาพและประหยัดค่าใช้จ่าย API 
 2. **เรื่อง Agent สำหรับ QC ข้อมูล:**
-   * **คำตอบ:** ไม่จำเป็นต้องสร้าง Agent แยกต่างหากให้เปลืองทรัพยากรครับ เราสามารถฝัง "เงื่อนไขการตรวจสอบ (Validation Rules)" ลงไปใน Prompt ของ Document Agent ได้เลย (เช่น "ห้ามให้เลขใหม่น้อยกว่าเลขเก่า") และให้มนุษย์ (Human-in-the-loop) เป็นคนยืนยันความถูกต้องขั้นสุดท้าย (QC หลัก) ก่อนไปสัปดาห์ที่ 3
+   * **คำตอบ:** ไม่จำเป็นต้องสร้าง Agent แยก 4 ตัวเหมือนในแผนเดิมครับ เราจะลดความซับซ้อนโดยฝัง "เงื่อนไขการตรวจสอบ (Validation Rules)" ลงไปใน Workflow ของ Document Agent และใช้สคริปต์ `recalc.py` ของ Eigent ตรวจหา Error ใน Excel แทน
 3. **เรื่อง Suggestion Prompt (ปุ่มกดคำสั่งด่วน):**
-   * **คำตอบ:** จากการไปตรวจสอบโค้ดใน `src/components/ChatBox/index.tsx` พบว่ามีปุ่ม Suggestion ฝังอยู่จริง โดยจะดึงข้อความจากไฟล์แปลภาษา (`layout.json`) เราสามารถเปลี่ยนข้อความเหล่านี้เป็นคำสั่งของเราได้เลย (ทำใน Week 2 นี้ได้เลยครับ เพื่อให้พนักงานบัญชีกดปุ่มเดียวแล้ว AI เริ่มรันตาม Flow ได้ทันที)
+   * **คำตอบ:** เราสามารถแก้ไขข้อความในไฟล์ `layout.json` ให้เป็นคำสั่งของเราได้เลย (ทำใน Phase 1 ของสัปดาห์นี้) เมื่อกดแล้วระบบจะรัน Workflow ทั้งหมดทันที
 
 ---
 
@@ -24,70 +24,62 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
 ### Phase 1: Customize Suggestion Prompts (UI & i18n)
 **Objective:** Replace Eigent's default suggestion buttons with our Accounting workflows to make it user-friendly.
 
-1. **Update `src/components/ChatBox/index.tsx` (Optional but recommended for clean code):**
-   - Modify lines 1424-1437 to use our custom translation keys (e.g., `layout.monthly-calc`, `layout.monthly-calc-prompt`).
-2. **Update `src/i18n/locales/th/layout.json`:**
-   - Add the new keys:
+1. **Update `src/i18n/locales/th/layout.json`:**
+   - Modify the UI text to provide a 1-click execution button for the accountants.
      ```json
      {
        "monthly-calc": "คำนวณบิลเดือนนี้",
-       "monthly-calc-prompt": "กรุณาเริ่มกระบวนการคำนวณบิลประจำเดือน 1. ตรวจสอบโฟลเดอร์ภาพมิเตอร์ 2. ย่อขนาดภาพ 3. ทำ OCR อ่านเลขมิเตอร์ 4. บันทึกลง Excel พร้อมแนบรูป และรอให้ฉันตรวจสอบ"
+       "monthly-calc-prompt": "กรุณาเริ่มกระบวนการคำนวณบิลประจำเดือน\n1. จัดการรูปในโฟลเดอร์ \n2. อ่านเลขมิเตอร์และตรวจสอบความชัดเจน \n3. บันทึกลง Excel (ย้ายเลขเก่า, ใส่เลขใหม่, แนบรูป) \n4. รัน QC ตรวจสอบความผิดปกติ แล้วรอให้ฉันตรวจสอบผลลัพธ์"
      }
      ```
+2. **Update `src/components/ChatBox/index.tsx` (If necessary):**
+   - Bind the suggestion button directly to our new translation keys.
 
 **Testing (Phase 1):**
-- *Manual Test:* Restart the dev server, open the UI, and click the "คำนวณบิลเดือนนี้" button. Verify that the prompt text is correctly populated into the chat input box.
+- *Manual Test:* Restart the dev server, open the UI, click the "คำนวณบิลเดือนนี้" button, and verify the prompt correctly populates the chat input.
 
 ---
 
-### Phase 2: Image Pre-processing Script (Token Optimization)
-**Objective:** Create a fast, local script to resize images before sending them to the expensive Multi-Modal Agent.
+### Phase 2: File Management & Image Pre-processing Script
+**Objective:** Handle the File Watcher & Mover logic and resize images before sending them to the expensive Multi-Modal Agent.
 
-1. **Write `scripts/resize_images.py`:**
-   - A simple script using `Pillow` (PIL) to read all images in `copilot_data/meter-photos/inbox/`.
-   - Resize them (e.g., max 1024px width/height, compressed JPEG).
-   - Save the output to `copilot_data/meter-photos/processed/` and move the originals to `archive/`.
-
-**Pseudocode:**
-```python
-import os
-from PIL import Image
-
-INBOX_DIR = "copilot_data/meter-photos/inbox/"
-PROCESSED_DIR = "copilot_data/meter-photos/processed/"
-MAX_SIZE = (1024, 1024)
-
-def optimize_images():
-    for filename in os.listdir(INBOX_DIR):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            in_path = os.path.join(INBOX_DIR, filename)
-            out_path = os.path.join(PROCESSED_DIR, filename)
-            
-            with Image.open(in_path) as img:
-                img.thumbnail(MAX_SIZE) # Resizes maintaining aspect ratio
-                img.save(out_path, "JPEG", quality=85)
-            
-            # Optionally move original to archive
-            os.rename(in_path, f"copilot_data/meter-photos/archive/{filename}")
-
-if __name__ == "__main__":
-    optimize_images()
-```
+1. **Write `scripts/process_inbox.py`:**
+   - Scan all images in `copilot_data/meter-photos/inbox/`.
+   - Resize them to max 1024x1024px to save tokens.
+   - Parse the filename (e.g., `V-A1_water_20260601.jpg`) to extract the Shop ID and unit type.
+   - Move the resized images into a structured folder: `copilot_data/meter-photos/processed/YYYY-MM/`.
+   - Move original raw images to `archive/`.
 
 **Testing (Phase 2):**
-- *Manual Test:* Place a large 5MB photo in the inbox, run `python scripts/resize_images.py`, and check if the processed photo is under 500KB while still readable.
+- *Manual Test:* Place a large 5MB photo in the inbox, run the script, and check if the processed photo is correctly placed in a `YYYY-MM` folder and is under 500KB.
 
 ---
 
-### Phase 3: Workflow Prompt Design & Execution
-**Objective:** Tie the Developer Agent (for resizing), Multi-Modal Agent (for OCR), and Document Agent (for Excel) together via a single Master Prompt.
+### Phase 3: Workflow Prompt Design & Execution (OCR + Excel + QC)
+**Objective:** Tie the Multi-Modal Agent (OCR) and Document Agent (Excel + QC) together via the Master Prompt, integrating all constraints from `detail_timeline.md`.
 
-1. **Configure the Master Prompt:**
-   When the user clicks the Suggestion Prompt from Phase 1, Eigent's orchestrator will break down the task. We need to ensure the system prompt or the suggestion prompt explicitly directs the agents:
-   - **Step 1 (Developer Agent):** Run `python scripts/resize_images.py`.
-   - **Step 2 (Multi-Modal Agent):** Look at all images in `copilot_data/meter-photos/processed/` and extract `{"shop_id": "...", "water_meter": 123, "electric_meter": 456}`.
-   - **Step 3 (Document Agent):** Use the `xlsx` skill to open `copilot_data/excel-files/template/รายงาน...xlsx`. For each `shop_id`, copy the previous month's meter to the "old" column, insert the new values, embed the corresponding image from the `processed/` folder, and save it to the `monthly/` folder.
-   - **Step 4 (Built-in QC):** The Document Agent must verify that `new_meter >= old_meter`. If not, flag it in the final summary response.
+1. **Configure the Multi-Modal Agent (OCR Reader):**
+   - Instruct the agent to read images in the `processed/YYYY-MM/` folder.
+   - **Constraint:** Output MUST be in JSON format: 
+     `{"shop_name": "...", "reading": 1234, "unit": "water"|"electric", "confidence": "high"|"low"}`
+   - **Error Handling:** If `confidence` is "low" (blurred/unreadable), the agent must immediately pause and alert the user in the chat: *"รูปห้อง [shop_name] อ่านไม่ออก รบกวนขอรูปใหม่ค่ะ"*
+
+2. **Configure the Document Agent (Excel Writer):**
+   - Open `copilot_data/excel-files/template/รายงาน...xlsx`.
+   - **Core Logic:**
+     - **Copy old meter value:** MUST copy the value from the "Current Meter" column and paste it into the "Previous Meter" column (to clear the slot and test formulas).
+     - **Insert new reading:** Enter the new meter value from the OCR JSON.
+     - **Embed Image:** Attach the resized meter photo directly into the row matching the shop.
+   - Save the file as a new copy: `copilot_data/excel-files/monthly/รายงาน_[YYYY-MM].xlsx`.
+
+3. **Built-in QC (Document Agent & recalc.py):**
+   - The agent must verify logical constraints:
+     - `new_meter > old_meter`.
+     - Usage (`new_meter - old_meter`) is not suspiciously high (>500 units) or 0.
+   - Run Eigent's built-in `scripts/recalc.py` on the saved file to ensure no `#REF!` or `#VALUE!` errors exist in the spreadsheet.
+   - Compile a final summary report in the chat for the user to review.
 
 **Testing (Phase 3):**
-- *End-to-End Manual Test:* Drop 2 sample meter photos into the inbox. Click the suggestion prompt in the UI. Monitor Eigent as it assigns the tasks to the different agents. Finally, open the resulting Excel file to verify the numbers, formulas, and images are correctly placed.
+- *End-to-End Manual Test:* Drop 2 sample meter photos (one clear, one intentionally blurry) into the inbox. Click the suggestion prompt. Verify that:
+  1. The blurry image triggers a chat warning.
+  2. The clear image gets processed, Excel is updated (old meter moved, new meter entered, image embedded), and QC passes without formula errors.
