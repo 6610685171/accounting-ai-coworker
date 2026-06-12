@@ -1,62 +1,57 @@
-# AI Accounting Copilot Implementation Plan (6 Weeks)
+# **AI Accounting Copilot: Overall Implementation Plan (Revised with Eigent Native Agents)**
 
-The goal is to develop an AI Coworker (AR Module) for an accounting team over a 6-week period by extending the open-source Eigent framework. The system will handle meter readings via OCR, automate Excel data entry, generate FlowAccount invoices via MCP, and provide flexible LINE notifications, all orchestrated through a multi-agent architecture with human-in-the-loop checkpoints.
+จากการตรวจสอบ `README.md` ของ Eigent แพลตฟอร์มมี Agent สำเร็จรูป (Pre-defined Agents) และฟีเจอร์พื้นฐานที่แข็งแกร่งมาก ซึ่งเรา **สามารถนำมาใช้ซ้ำ (Reuse) ได้เกือบ 100% โดยไม่ต้องเขียน Agent เองใหม่ตั้งแต่ต้น** สิ่งนี้จะช่วยประหยัดเวลาการพัฒนาได้อย่างมหาศาล
 
-## User Review Required
-> [!IMPORTANT]
-> - Please review the multi-agent architecture proposed for the OCR and Excel integration.
-> - Please confirm if the breakdown of tasks across the 6 weeks aligns with your expectations and technical constraints.
+## 🔄 สรุปการจับคู่ (Mapping) เครื่องมือของ Eigent กับระบบของเรา
 
-## Open Questions
-> [!WARNING]
-> 1. **API Keys:** Do you already have the Claude Vision / GPT-4o API keys and LINE OA Token available, or should we mock these for the initial development phases?
-> 2. **FlowAccount:** How should we handle the integration of FlowAccount MCP initially? Will we test it against a sandbox/developer account?
-> 3. **Eigent Platform:** Are we working within a specific branch or existing fork of the Eigent repository, or will we be initializing a fresh clone during Week 1?
+| งานในระบบบัญชีของเรา | Eigent Agent / Feature ที่จะนำมาใช้ | รายละเอียดการประยุกต์ใช้ |
+| :--- | :--- | :--- |
+| **1. เฝ้าดูรูปมิเตอร์ใหม่** | **Triggers (Native Feature)** | ใช้ระบบตั้งเวลา/เงื่อนไขของ Eigent เพื่อเช็คโฟลเดอร์ภาพอัตโนมัติ โดยไม่ต้องเขียน File Watcher เอง |
+| **2. อ่านเลขมิเตอร์ (OCR)** | **Multi-Modal Agent** | ให้ Agent ตัวนี้อ่านรูปภาพมิเตอร์และสกัดตัวเลขออกมาเป็น JSON ได้เลย ไม่ต้องเขียนต่อ API Vision เอง |
+| **3. กรอกไฟล์ Excel และ QC** | **Document Agent + `xlsx` Skill** | ใช้ Document Agent ร่วมกับ `xlsx` skill (ที่มีอยู่แล้วใน `resources/example-skills/xlsx`) เพื่อให้จัดการสูตรและวางภาพใน Excel อย่างปลอดภัย |
+| **4. เชื่อมต่อ FlowAccount** | **MCP Integration (Native)** | Eigent รองรับ MCP ให้อยู่แล้ว แค่นำ FlowAccount MCP มาเสียบ ระบบก็จะเข้าใจวิธีดึง/สร้าง Draft Invoice ได้เอง |
 
-## Proposed Changes
+---
 
-### Week 1: Foundation & Thai Localization
-- **[MODIFY]** `locales/` or `i18n/` files in the Eigent frontend to translate UI elements to Thai.
-- **[NEW]** Setup backend folder structures for `/meter-photos/` (inbox, processed, archive), `/excel-files/` (template, monthly), `/output/invoices/`, and `/config/`.
-- **[NEW]** `scripts/excel_test.py`: A Python script to verify reading/writing to the company's existing `.xlsx` template using `openpyxl` without breaking formulas or formatting.
-- **[MODIFY]** Customer database structure to add `LINE_USER_ID`, `DELIVERY_MODE`, and `CONTACT_PREFERENCE`.
+## 🗓️ ไทม์ไลน์ 6 สัปดาห์ (อัปเดตใหม่ เน้นการใช้ Native Agents)
 
-### Week 2: Feature 1 - Meter Reader Copilot (Multi-Agent)
-- **[NEW]** `agents/file_watcher.py`: Agent to monitor `/meter-photos/inbox/`, parse file names, and move files to `/processed/`.
-- **[NEW]** `agents/ocr_reader.py`: Agent to call Vision API and extract meter readings in JSON format.
-- **[NEW]** `agents/excel_writer.py`: Agent to duplicate previous month's meter value, enter the new value, calculate utility costs (Water=20, Elec=7, Tax=70/50), embed resized images, and save as a new file.
-- **[NEW]** `agents/qc_checker.py`: Agent to validate extracted data (e.g., new > old) and report anomalies to the user.
+### **สัปดาห์ที่ 1: Foundation & Thai Localization**
+* **เป้าหมาย:** เตรียมระบบพื้นฐานและแปลภาษา
+* **งานที่ทำ:**
+  * แปลไฟล์ใน `src/i18n/locales/` เป็นภาษาไทย
+  * จัดเตรียมโฟลเดอร์สำหรับเอกสาร (`copilot_data/meter-photos`, `copilot_data/excel-files`)
+  * กำหนดโครงสร้าง Database ลูกค้าใน Sheet ของ Excel
 
-### Week 3: Feature 2 - Invoice Draft Copilot & FlowAccount MCP
-- **[NEW]** Connect and configure FlowAccount MCP.
-- **[NEW]** `scripts/data_extractor.py`: Python script to extract billing amounts from the finalized Excel sheet and map them to JSON for FlowAccount.
-- **[NEW]** `agents/invoice_creator.py`: Agent to use FlowAccount MCP to create draft invoices based on extracted Excel data.
-- **[NEW]** `agents/invoice_verifier.py`: Agent to double-check the created FlowAccount drafts against the Excel data.
+### **สัปดาห์ที่ 2: Meter Reader Copilot (ใช้ Multi-Modal & Document Agent)**
+* **เป้าหมาย:** สกัดข้อความจากภาพมิเตอร์ลง Excel
+* **งานที่ทำ:**
+  * ตั้งค่า **Triggers** ให้เริ่มงานเมื่อมีไฟล์ภาพใหม่ใน Inbox
+  * สร้าง Workflow ให้ส่งภาพไปที่ **Multi-Modal Agent** เพื่อทำ OCR สกัดเลขห้องและเลขมิเตอร์
+  * ส่งข้อมูลที่สกัดได้ไปให้ **Document Agent** (ใช้ `xlsx` skill) เข้าไปเปิดไฟล์บริษัท, กรอกเลข, คัดลอกสูตรคำนวณเงิน, และฝังรูปภาพมิเตอร์ลงไป
 
-### Week 4: Human-in-the-Loop Integration
-- **[MODIFY]** Eigent native UI workflows to introduce 3 Approval Gates:
-  - **Gate 1:** Post-OCR & Excel Entry (Approve or Request Edits).
-  - **Gate 2:** Post-FlowAccount Draft (Confirm drafts).
-  - **Gate 3:** Pre-LINE Delivery (Review messages).
+### **สัปดาห์ที่ 3: Invoice Draft Copilot (ใช้ MCP Integration)**
+* **เป้าหมาย:** ส่งข้อมูลจาก Excel ไปสร้างใบแจ้งหนี้
+* **งานที่ทำ:**
+  * ติดตั้งและทดสอบปลั๊กอิน FlowAccount MCP บน Eigent (ทดสอบกับ Test Company)
+  * สร้าง Workflow ให้ Agent ดึงข้อมูลยอดสุทธิจากไฟล์ Excel แล้วเรียกใช้ MCP tool เพื่อสร้าง Draft Invoice โดยตรง
 
-### Week 5: Flexible LINE Delivery
-- **[NEW]** `LINE_Templates` sheet added to the Excel database for easy customization of notification messages.
-- **[NEW]** `agents/delivery_agent.py`: Agent to handle the delivery flow.
-  - **Manual Mode:** Prepares images/PDFs and formatted markdown for the accountant to copy-paste.
-  - **Automated Mode:** Uses `LINE_OA_TOKEN` to push messages directly to customers via API.
+### **สัปดาห์ที่ 4: Human-in-the-Loop & Workflow Coordination**
+* **เป้าหมาย:** วางจุดตรวจสอบให้มนุษย์เข้ามาแทรกแซง
+* **งานที่ทำ:**
+  * ใช้ฟีเจอร์ **Human-in-the-Loop** ของ Eigent ตั้งค่าแชทแจ้งเตือนให้พนักงานบัญชีกด "ตรวจสอบและอนุมัติ" ใน 2 จุดหลัก: 
+    1. หลังอัปเดต Excel เสร็จ (ก่อนยิง FlowAccount)
+    2. หลังสร้าง FlowAccount Draft เสร็จ (ก่อนยิงข้อความหาลูกค้า)
 
-### Week 6: Polish, Edge Cases & Demo
-- **[MODIFY]** Add robust error handling (e.g., blurred photos, API timeouts, missing LINE IDs).
-- **[NEW]** `docs/USER_GUIDE.md`: A concise manual covering photo naming conventions, template editing, and error resolution.
-- **[NEW]** Demo scripts and sample data setup for the final presentation.
+### **สัปดาห์ที่ 5: Flexible LINE Delivery (ใช้ Document Agent)**
+* **เป้าหมาย:** สร้างข้อความส่ง LINE ที่แก้ไขได้
+* **งานที่ทำ:**
+  * ให้ **Document Agent** อ่าน Template การส่งข้อความจาก Excel
+  * นำข้อมูลมาสวมใน Template และสร้างเป็นข้อความแจ้งหนี้/ส่งภาพ Invoice สรุปมาให้ในแชท Eigent
+  * ให้พนักงานบัญชีสามารถ Copy ข้อความไปส่งเอง (Manual Mode) หรือถ้ามีเวลาอาจจะเชื่อมต่อ LINE MCP สำหรับส่งอัตโนมัติ
 
-## Verification Plan
-
-### Automated Tests
-- `pytest tests/test_ocr_parser.py`: Verify that the Vision API parsing correctly formats JSON output.
-- `pytest tests/test_excel_writer.py`: Ensure openpyxl updates formulas correctly and embeds images without corruption.
-
-### Manual Verification
-- Test End-to-End workflow using 3-5 sample photos and a mock Excel file.
-- Verify human-in-the-loop triggers pause the agent execution and resume upon user approval.
-- Confirm FlowAccount drafts appear correctly in the FlowAccount web UI.
+### **สัปดาห์ที่ 6: Polish, Edge Cases & Demo Prep**
+* **เป้าหมาย:** เก็บงานและแก้ไขข้อผิดพลาด
+* **งานที่ทำ:**
+  * ปรับจูน Prompt ของ Multi-Modal Agent ให้รับมือกับภาพเบลอ หรือเลขมิเตอร์ที่ไม่สมเหตุสมผล
+  * จัดทำเอกสารคู่มือ (User Guide)
+  * เตรียมซ้อม Live Demo ทั้งระบบ
