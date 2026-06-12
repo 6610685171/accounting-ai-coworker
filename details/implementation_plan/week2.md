@@ -1,58 +1,46 @@
 # AI Accounting Copilot: Week 2 Implementation Plan
 
-This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents, custom Python scripts for speed, and addresses the complexities of LINE album naming, Excel sheet management, and parallel processing. 
-
-**Pseudocode and strict testing methodologies (manual/automation) are provided for each phase.**
+This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents, custom Python scripts for speed, and a robust "Native Agent Injection" deployment strategy to make the app look premium and ready-to-use out of the box.
 
 ---
 
 ## 📌 User Review Required
 > [!IMPORTANT]
-> - **Pseudocode Check:** Please review the pseudocode provided in Phase 3 for the automation scripts to ensure the logic aligns with your expectations.
-> - **Custom Agent Creation:** I recommend creating a Custom Agent via the Eigent UI for this workflow, rather than just modifying the layout.json.
+> - **Native Agent Injection:** I completely agree with the other AI's suggestion! We will inject our agent deep into the codebase (Backend & Frontend) so it ships as a default agent alongside Developer and Document agents. Please review Phase 1 for this new deployment strategy.
 
 ## ✅ Open Questions (Answered)
-1. **เพิ่มชื่ออัลบั้ม LINE "DD/M/YYYY" และ "DD/M/YYYY #1" ลงไปใน Prompt ได้ไหม?**
-   * **คำตอบ:** ได้ครับ อัปเดตลงในสคริปต์ `fetch_from_downloads.py` (ดู Pseudocode ด้านล่าง) เพื่อให้ดึงไฟล์น้ำและไฟมาได้อย่างถูกต้อง
-2. **เรื่องชื่อ Sheet ใน Excel (Copy ของเดือนเก่ามาเปลี่ยนชื่อ)**
-   * **คำตอบ:** ปรับ Prompt ให้ AI ทำการ **Duplicate Sheet ล่าสุด และเปลี่ยนชื่อเป็นเดือนปัจจุบัน** ก่อนเริ่มกรอกข้อมูลครับ
-3. **ต้องบอก AI ไหมว่าตอนนี้คือเดือนอะไร?**
-   * **คำตอบ:** เราจะแทรก "วันที่ปัจจุบันของคอมพิวเตอร์" ลงไปใน Prompt ผ่านโค้ดหน้า UI เลยครับ
-4. **ควรสร้าง Agent ตัวใหม่สำหรับ Task นี้ในแอปไหม?**
-   * **คำตอบ:** ควรสร้างครับ! ให้สร้าง Agent ชื่อ "Accounting Copilot" แล้วเอา Master Prompt ไปใส่ใน System Prompt
-5. **ควรใช้ Sub-agent ไหม จะได้ทำงาน Parallel (เพราะมีถึง 60 รูป)?**
-   * **คำตอบ:** ในกระบวนการ OCR ให้ใช้การทำ Batch Process พร้อมๆ กันเพื่อความรวดเร็วครับ
-6. **มีเขียน Pseudocode ลงใน Plan หรือยัง?**
-   * **คำตอบ:** ตอนแรกยังเขียนไม่ครบถ้วนครับ ขออภัยด้วย ตอนนี้ผมได้เพิ่ม Pseudocode ของทุกสคริปต์ที่ต้องใช้ พร้อมทั้งวิธีทดสอบอย่างละเอียดในแต่ละ Phase ตามที่คุณขอมาตั้งแต่แรกเรียบร้อยแล้วครับ!
+1. **เราทำแบบเขา (มี Agent โผล่มาให้เลย) ได้ไหม?**
+   * **คำตอบ:** **ทำได้ 100% ครับ และนี่คือวิธีที่ถูกต้องที่สุดในการทำซอฟต์แวร์ส่งมอบครับ!** AI อีกตัวแนะนำได้ถูกจุดเป๊ะเลยครับ 
+   * จากการที่ผมเข้าไปค้นในโค้ดของ Eigent ตัว Agent ทั้ง 4 ตัวของเขานั้น **ไม่ได้ดึงจาก Database แต่ถูกเขียนฝัง (Hardcode) ไว้ใน Source Code ในส่วนของ Backend Factory** (ไฟล์อย่าง `developer.py`, `multi_modal.py` ฯลฯ) 
+   * **วิธีแก้:** เราจะสร้างไฟล์ `accounting.py` แทรกเข้าไปเนียนๆ เป็น **Agent ตัวที่ 5** ในระบบเลยครับ พอ Build แอปเสร็จ พนักงานเปิดมาปุ๊บ จะมี **"Accounting Copilot"** ยิ้มแฉ่งรอรับงานเลย ดูพรีเมียมสุดๆ ครับ!
 
 ---
 
 ## 🚀 Proposed Changes (Phases)
 
-### Phase 1: Create Custom Agent & UI Trigger
-**Objective:** Create a dedicated Agent persona in Eigent and link it to our Suggestion Prompt.
+### Phase 1: "Native Agent Injection" (Deploy as Built-in Agent)
+**Objective:** Hardcode the `Accounting Copilot` directly into Eigent's backend and frontend so it becomes a default, ready-to-use feature for the accountant.
 
-1. **Create Agent via UI (Manual Step for User):**
-   - In Eigent, create a new Agent.
-   - Name: `Accounting Copilot`
-   - Description/System Prompt: *(Insert the Master Prompt below)*
-   - Tools: Enable `Python Execution`, `File Reader/Writer`, `xlsx` (Excel operations).
+1. **Backend Integration (`backend/app/agent/factory/accounting.py`):**
+   - Create a new factory class inheriting from Eigent's agent structure.
+   - Inject our **Master Logic Prompt** (with the exact OCR, Excel, and QC logic) directly into the `system_message` of this Python class.
+   - Register it in `backend/app/agent/factory/__init__.py`.
 
-2. **Update `src/components/ChatBox/index.tsx` & `layout.json`:**
-   - Inject the dynamic date into the prompt execution so the AI knows the context.
-   ```json
-   "monthly-calc": "คำนวณบิลเดือนนี้",
-   "monthly-calc-prompt": "รันกระบวนการทำบิลประจำเดือน {CURRENT_MONTH} กรุณาเริ่มได้เลย"
-   ```
+2. **Frontend UI Integration:**
+   - Update `src/components/WorkFlow/agents.tsx` and `src/store/chatStore.ts` so "Accounting Copilot" appears in the Agent selection menu.
+   - Update `src/i18n/locales/th/layout.json` to include our custom suggestion prompt:
+     ```json
+     "monthly-calc": "คำนวณบิลเดือนนี้",
+     "monthly-calc-prompt": "รันกระบวนการทำบิลประจำเดือน {CURRENT_MONTH} กรุณาเริ่มได้เลย"
+     ```
 
 **Testing (Phase 1):**
-- *Manual:* Open Eigent UI, verify the new suggestion button appears. Click it and ensure the text populates the input field correctly.
-- *Automation:* Unit test (if React testing library is set up) to check if the button click triggers `setMessage` with the correct localized string.
+- *Manual:* Restart the server. Open the browser and verify that "Accounting Copilot" is listed in the available agents. Click the "คำนวณบิลเดือนนี้" suggestion button and verify it triggers the newly created agent successfully.
 
 ---
 
-### Phase 2: System Prompt (Master Logic)
-**Objective:** The core brain of the `Accounting Copilot` Agent.
+### Phase 2: System Prompt (Master Logic inside `accounting.py`)
+**Objective:** The core brain of the `Accounting Copilot`, embedded in Python.
 
 **System Prompt (English for accuracy):**
 ```text
@@ -84,12 +72,9 @@ You are an Accounting AI Copilot. Your task is to process the monthly billing fo
 CRITICAL: All your chat messages and the final summary MUST be in Thai.
 ```
 
-**Testing (Phase 2):**
-- *Manual:* Paste the prompt into the System Prompt box of the Custom Agent and save. Send a generic test message to ensure the agent adopts the persona and responds in Thai.
-
 ---
 
-### Phase 3: Python Automation Scripts
+### Phase 3: Python Automation Scripts (Pseudocode & Testing)
 **Objective:** Handle the heavy lifting (File fetching, resizing, image enhancement) via fast Python scripts.
 
 #### 1. Pseudocode: `scripts/fetch_from_downloads.py`
@@ -103,7 +88,6 @@ from datetime import datetime
 from PIL import Image, ImageEnhance
 
 DOWNLOADS_DIR = os.path.expanduser("~/Downloads")
-INBOX_DIR = "copilot_data/meter-photos/inbox/"
 PROCESSED_DIR = "copilot_data/meter-photos/processed/"
 MAX_SIZE = (1024, 1024)
 
@@ -119,9 +103,7 @@ def fetch_and_process_images():
     for item in os.listdir(DOWNLOADS_DIR):
         item_path = os.path.join(DOWNLOADS_DIR, item)
         if os.path.isdir(item_path) and folder_pattern.match(item):
-            # It's a LINE album folder
             unit_type = "water" if "#1" in item else "electric"
-            
             for file in os.listdir(item_path):
                 if file.lower().endswith(('.png', '.jpg', '.jpeg')):
                     img_path = os.path.join(item_path, file)
@@ -129,11 +111,10 @@ def fetch_and_process_images():
                     # 1. Enhance & Resize
                     with Image.open(img_path) as img:
                         enhancer = ImageEnhance.Contrast(img)
-                        enhanced_img = enhancer.enhance(1.2) # Boost contrast by 20%
+                        enhanced_img = enhancer.enhance(1.2) # Boost contrast
                         enhanced_img.thumbnail(MAX_SIZE)
                         
-                        # 2. Extract Shop ID from filename (assuming format ShopID.jpg)
-                        # Example: "A1_001.jpg" -> "A1"
+                        # 2. Extract Shop ID
                         shop_id = file.split('_')[0].split('.')[0]
                         new_filename = f"{shop_id}_{unit_type}.jpg"
                         
@@ -141,42 +122,11 @@ def fetch_and_process_images():
                         out_path = os.path.join(target_processed_dir, new_filename)
                         enhanced_img.save(out_path, "JPEG", quality=85)
                         
-            # Move the original downloaded folder to archive so it isn't processed again next month
+            # Move the original folder to archive
             shutil.move(item_path, os.path.join("copilot_data/meter-photos/archive/", item))
 
 if __name__ == "__main__":
     fetch_and_process_images()
-    print("Fetch and processing complete.")
-```
-
-#### 2. Pseudocode: `scripts/batch_ocr.py` (Optional / If Eigent Multi-agent is too slow)
-If having the AI agent read 60 images individually is too slow, we can write a script to make concurrent API calls to the LLM.
-
-```python
-import asyncio
-import os
-import json
-
-async def ocr_image(image_path):
-    # Pseudo-function calling LLM Vision API
-    # prompt = "Read meter. Return JSON: shop_id, reading, unit, confidence"
-    # response = await call_vision_api(image_path, prompt)
-    # return json.loads(response)
-    pass
-
-async def main():
-    folder = "copilot_data/meter-photos/processed/2026-06/"
-    images = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith('.jpg')]
-    
-    # Run all 60 images in parallel
-    tasks = [ocr_image(img) for img in images]
-    results = await asyncio.gather(*tasks)
-    
-    with open("copilot_data/meter-photos/processed/2026-06/ocr_results.json", "w") as f:
-        json.dump(results, f)
-
-if __name__ == "__main__":
-    asyncio.run(main())
 ```
 
 **Testing (Phase 3):**
