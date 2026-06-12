@@ -1,42 +1,37 @@
 # AI Accounting Copilot: Week 2 Implementation Plan
 
-This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and integrates the detailed business logic and specific requirements found in `detail_timeline.md`.
+This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-step phases. It incorporates the use of Eigent's native agents (Multi-Modal and Document Agents) and integrates the refined prompt logic to ensure smooth, autonomous execution with a single, user-friendly human-in-the-loop checkpoint.
 
 ---
 
 ## 📌 User Review Required
 > [!IMPORTANT]
-> - **Suggestion Prompt:** I've proposed modifying the existing hardcoded suggestions in the chat UI. Please confirm if changing the default suggestions to accounting-specific ones is acceptable.
-> - **Workflow Orchestration:** We will use Eigent's built-in agents orchestrated via a single detailed Prompt. Does this align with how you envision the user interacting with the system?
+> - **Suggestion Prompt Logic:** Please review the revised English prompt in Phase 1. It is designed to run autonomously without pausing at every step, only stopping at the end to present the summary table in Thai.
 
 ## ✅ Open Questions (Answered)
-1. **เรื่องการย่อรูป (Resize) เพื่อประหยัด Token:**
-   * **คำตอบ:** ควรทำครับ! เราจะใช้สคริปต์ Python สั้นๆ ทำขั้นตอนนี้ก่อนส่งให้ AI เพื่อลดขนาดภาพและประหยัดค่าใช้จ่าย API 
-2. **เรื่อง Agent สำหรับ QC ข้อมูล:**
-   * **คำตอบ:** ไม่จำเป็นต้องสร้าง Agent แยก 4 ตัวเหมือนในแผนเดิมครับ เราจะลดความซับซ้อนโดยฝัง "เงื่อนไขการตรวจสอบ (Validation Rules)" ลงไปใน Workflow ของ Document Agent และใช้สคริปต์ `recalc.py` ของ Eigent ตรวจหา Error ใน Excel แทน
-3. **เรื่อง Suggestion Prompt (ปุ่มกดคำสั่งด่วน):**
-   * **คำตอบ:** เราสามารถแก้ไขข้อความในไฟล์ `layout.json` ให้เป็นคำสั่งของเราได้เลย (ทำใน Phase 1 ของสัปดาห์นี้) เมื่อกดแล้วระบบจะรัน Workflow ทั้งหมดทันที
+1. **Human-in-the-loop เยอะไปไหม?**
+   * **คำตอบ:** ใช่ครับ การให้ AI หยุดรอทุกขั้นตอนจะทำให้เสียเวลาและจุกจิกเกินไป แผนดั้งเดิมของเรา (`detail_timeline.md`) ระบุให้มี Gate 1 แค่จุดเดียวคือ "หลัง OCR & กรอก Excel เสร็จ" ดังนั้นผมปรับ Prompt ให้รันรวดเดียวตั้งแต่ขั้น 1-4 แล้วค่อยมาสรุปตารางให้ผู้ใช้กดยืนยันทีเดียวจบครับ (ยกเว้นกรณีภาพเบลออ่านไม่ออก ค่อยหยุดถาม)
+2. **ควรเขียน Prompt เป็นภาษาไทยหรืออังกฤษ?**
+   * **คำตอบ:** **ควรเขียนโครงสร้างคำสั่ง (Logic) เป็นภาษาอังกฤษ แต่บังคับ Output เป็นภาษาไทยครับ** เพราะ AI ทุกตัวบนโลก (รวมถึงในแพลตฟอร์ม Eigent) ถูกเทรนด้วยภาษาอังกฤษเป็นหลัก การสั่งงานแบบมี Logic ซับซ้อน (เช่น การย้ายโฟลเดอร์, ลำดับการทำ Excel, เงื่อนไข QC) ภาษาอังกฤษจะทำให้ AI ทำตามได้เป๊ะที่สุดและไม่หลุดโฟกัส แต่เราจะใส่คำสั่งบรรทัดสุดท้ายตัวใหญ่ๆ ว่า **"All chat responses and summaries MUST be in Thai"** เพื่อให้การสื่อสารกับเราเป็นภาษาไทยทั้งหมดครับ
 
 ---
 
 ## 🚀 Proposed Changes (Phases)
 
 ### Phase 1: Customize Suggestion Prompts (UI & i18n)
-**Objective:** Replace Eigent's default suggestion buttons with our Accounting workflows to make it user-friendly.
+**Objective:** Replace Eigent's default suggestion buttons with our Accounting workflows. We will use the highly optimized, English-based Master Prompt.
 
 1. **Update `src/i18n/locales/th/layout.json`:**
-   - Modify the UI text to provide a 1-click execution button for the accountants.
+   - Add the suggestion button for Monthly Calculation.
      ```json
      {
        "monthly-calc": "คำนวณบิลเดือนนี้",
-       "monthly-calc-prompt": "กรุณาเริ่มกระบวนการคำนวณบิลประจำเดือน\n1. จัดการรูปในโฟลเดอร์ \n2. อ่านเลขมิเตอร์และตรวจสอบความชัดเจน \n3. บันทึกลง Excel (ย้ายเลขเก่า, ใส่เลขใหม่, แนบรูป) \n4. รัน QC ตรวจสอบความผิดปกติ แล้วรอให้ฉันตรวจสอบผลลัพธ์"
+       "monthly-calc-prompt": "You are an Accounting AI Copilot. Execute the monthly billing process autonomously. Do NOT pause between steps unless an error requires user input.\n\n**Step 1 — Prepare Images**\n- Execute `scripts/process_inbox.py` to resize images to max 1024x1024px, extract Shop ID/unit type from filenames, and move them to `copilot_data/meter-photos/processed/YYYY-MM/`.\n\n**Step 2 — OCR (Meter Reading)**\n- Read images in the processed folder. Extract to JSON ONLY: `{\"shop_id\": \"...\", \"reading\": 1234, \"unit\": \"water\"|\"electric\", \"confidence\": \"high\"|\"low\"}`.\n- IF confidence is \"low\", PAUSE immediately, output in Thai: \"รูปห้อง [shop_id] อ่านไม่ออก รบกวนส่งรูปมาอีกครั้งนะคะ\" (หรือเจนคำตอบให้userเองได้เลย) and wait for user.\n\n**Step 3 — Excel Update (Strict Order)**\n- Open `copilot_data/excel-files/template/รายงาน...xlsx`. For each shop:\n  1. COPY value from 'Current Meter' to 'Previous Meter'.\n  2. ENTER the new reading from OCR into 'Current Meter'.\n  3. EMBED the resized meter photo in the corresponding row.\n- Save as: `copilot_data/excel-files/monthly/รายงาน_[YYYY-MM].xlsx`.\n\n**Step 4 — QC & Validation**\n- Execute `scripts/recalc.py` to check for `#REF!` or `#VALUE!`.\n- Verify: New Meter > Previous Meter, and Usage is between 1 and 500.\n\n**Step 5 — Final Summary**\n- Output a summary table showing: ห้อง | มิเตอร์เก่า | มิเตอร์ใหม่ | ใช้ไป | ประเภท | สถานะ (✅ ปกติ / ⚠️ ผิดปกติ)\n- Ask the user to verify the Excel file and confirm.\n\nCRITICAL: All your chat messages, step summaries, and outputs MUST be in Thai language."
      }
      ```
-2. **Update `src/components/ChatBox/index.tsx` (If necessary):**
-   - Bind the suggestion button directly to our new translation keys.
 
 **Testing (Phase 1):**
-- *Manual Test:* Restart the dev server, open the UI, click the "คำนวณบิลเดือนนี้" button, and verify the prompt correctly populates the chat input.
+- *Manual Test:* Click the "คำนวณบิลเดือนนี้" button and verify the prompt populates the chat input correctly.
 
 ---
 
@@ -55,31 +50,16 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
 
 ---
 
-### Phase 3: Workflow Prompt Design & Execution (OCR + Excel + QC)
-**Objective:** Tie the Multi-Modal Agent (OCR) and Document Agent (Excel + QC) together via the Master Prompt, integrating all constraints from `detail_timeline.md`.
+### Phase 3: Workflow Execution (OCR + Excel + QC)
+**Objective:** Monitor the Multi-Modal Agent and Document Agent as they follow the Master Prompt instructions.
 
-1. **Configure the Multi-Modal Agent (OCR Reader):**
-   - Instruct the agent to read images in the `processed/YYYY-MM/` folder.
-   - **Constraint:** Output MUST be in JSON format: 
-     `{"shop_name": "...", "reading": 1234, "unit": "water"|"electric", "confidence": "high"|"low"}`
-   - **Error Handling:** If `confidence` is "low" (blurred/unreadable), the agent must immediately pause and alert the user in the chat: *"รูปห้อง [shop_name] อ่านไม่ออก รบกวนขอรูปใหม่ค่ะ"*
-
-2. **Configure the Document Agent (Excel Writer):**
-   - Open `copilot_data/excel-files/template/รายงาน...xlsx`.
-   - **Core Logic:**
-     - **Copy old meter value:** MUST copy the value from the "Current Meter" column and paste it into the "Previous Meter" column (to clear the slot and test formulas).
-     - **Insert new reading:** Enter the new meter value from the OCR JSON.
-     - **Embed Image:** Attach the resized meter photo directly into the row matching the shop.
-   - Save the file as a new copy: `copilot_data/excel-files/monthly/รายงาน_[YYYY-MM].xlsx`.
-
-3. **Built-in QC (Document Agent & recalc.py):**
-   - The agent must verify logical constraints:
-     - `new_meter > old_meter`.
-     - Usage (`new_meter - old_meter`) is not suspiciously high (>500 units) or 0.
-   - Run Eigent's built-in `scripts/recalc.py` on the saved file to ensure no `#REF!` or `#VALUE!` errors exist in the spreadsheet.
-   - Compile a final summary report in the chat for the user to review.
+1. **Execution Flow:**
+   - User clicks the Suggestion Prompt.
+   - Agent dynamically invokes Python tools, reads files, and updates the Excel.
+   - Human reviews the final Thai summary table in the chat and checks the saved Excel file.
 
 **Testing (Phase 3):**
 - *End-to-End Manual Test:* Drop 2 sample meter photos (one clear, one intentionally blurry) into the inbox. Click the suggestion prompt. Verify that:
-  1. The blurry image triggers a chat warning.
+  1. The blurry image triggers a chat warning in Thai.
   2. The clear image gets processed, Excel is updated (old meter moved, new meter entered, image embedded), and QC passes without formula errors.
+  3. The final summary table is presented in Thai, awaiting user confirmation.
