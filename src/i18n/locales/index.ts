@@ -45,10 +45,10 @@ export const resources = {
     translation: de,
   },
   fr: {
-    th: {
-      translation: th,
-    },
     translation: fr,
+  },
+  th: {
+    translation: th,
   },
   ru: {
     translation: ru,

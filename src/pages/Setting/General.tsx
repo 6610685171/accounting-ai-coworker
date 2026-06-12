@@ -156,6 +156,10 @@ export default function SettingGeneral() {
       key: LocaleEnum.Italian,
       label: 'Italiano',
     },
+    {
+      key: LocaleEnum.Thai,
+      label: 'ภาษาไทย',
+    },
   ];
 
   useEffect(() => {

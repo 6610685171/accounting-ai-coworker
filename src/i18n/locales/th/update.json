@@ -1,11 +1,11 @@
 {
-  "update-check-failed": "Update check failed (ภาษาไทย)",
-  "new-version-available": "New version available (ภาษาไทย)",
-  "download": "Download (ภาษาไทย)",
-  "update-error": "Update error (ภาษาไทย)",
-  "downloading-update": "Downloading update (ภาษาไทย)",
-  "complete": "Complete (ภาษาไทย)",
-  "download-completed": "Download completed (ภาษาไทย)",
-  "click-to-install-update": "Click to install update (ภาษาไทย)",
-  "install": "Install (ภาษาไทย)"
+  "update-check-failed": "การตรวจสอบการอัปเดตล้มเหลว",
+  "new-version-available": "มีเวอร์ชันใหม่พร้อมใช้งาน",
+  "download": "ดาวน์โหลด",
+  "update-error": "เกิดข้อผิดพลาดในการอัปเดต",
+  "downloading-update": "กำลังดาวน์โหลดการอัปเดต",
+  "complete": "เสร็จสมบูรณ์",
+  "download-completed": "ดาวน์โหลดเสร็จสมบูรณ์",
+  "click-to-install-update": "คลิกเพื่อติดตั้งการอัปเดต",
+  "install": "ติดตั้ง"
 }
