@@ -8,13 +8,12 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
 
 ## 📌 User Review Required
 > [!IMPORTANT]
-> - **App Shell Modifications:** I have added **Phase 4** to address your new requests regarding the Login Screen and the Stop Button. Please review to ensure this covers what you need.
+> - **Login Bypass Fix:** I've updated Phase 4 to solve the issue you encountered. When a user explicitly clicks "Logout", the backend clears the session, causing the auto-login to fail on the next restart. The best UX solution for a dedicated desktop app is to **hide the Logout button entirely**.
 
 ## ✅ Open Questions (Answered)
-1. **ตอนนี้มันไม่มีปุ่มให้ AI หยุดการทำงาน เพิ่มได้ไหม?**
-   * **คำตอบ:** **ทำได้สบายมากครับ!** จากการตรวจสอบโค้ดหน้าต่างแชท (`src/components/ChatBox/index.tsx`) ระบบมีฟังก์ชันหยุดทำงาน (Stop/Skip Task) ฝังอยู่แล้ว แต่อาจจะซ่อนอยู่หรือแสดงผลไม่ชัดเจนตอนที่ AI กำลังคิด ผมจะเพิ่ม Task ในการดึงปุ่ม "Stop 🛑" ออกมาโชว์ให้เห็นชัดๆ ตลอดเวลาที่ AI กำลังทำงานครับ
-2. **ตอนเปิดแอป ต้อง Login ก่อนถึงจะใช้ได้ แก้ให้ไม่ต้อง Login ได้ไหม?**
-   * **คำตอบ:** **แก้ได้ครับ!** ตัวโค้ดเดิมมีระบบ `Auto-login` สำหรับการรันบนเครื่อง Local (ออฟไลน์) ไว้อยู่แล้ว แต่อาจจะยังต้องให้ User กดปุ่ม หรือรอจังหวะเด้งเข้าหน้า Login ก่อน ผมจะแก้ไขโค้ดหน้า `Login.tsx` และไฟล์ Routing ให้มันทำการ Auto-login และเด้งข้ามเข้าหน้าทำงานหลัก (Dashboard) อัตโนมัติทันทีที่เปิดโปรแกรมครับ พนักงานบัญชีจะได้เปิดปุ๊บใช้ได้ปั๊บ!
+1. **ลองทำ Bypass ดูแล้ว แต่พอกด Logout แล้วปิดเปิดแอปใหม่ มันยังติดหน้า Login อยู่ เกิดจากอะไร?**
+   * **คำตอบ:** เป็นกลไกความปลอดภัยของระบบครับ! พอเรากดปุ่ม "Logout" ในหน้าตั้งค่า ตัวระบบเบื้องหลังจะทำการ "ทำลาย Session" ทิ้งทั้งหมด พอเปิดแอปใหม่ปุ๊บ ฟังก์ชัน `Auto-login` ที่เราเขียนไว้มันวิ่งไปขอเข้าสู่ระบบ แต่มันโดนเซิร์ฟเวอร์ปฏิเสธ (เพราะเพิ่งสั่ง Logout ไป) มันเลยค้างอยู่ที่หน้าจอ Login เหมือนเดิมครับ
+   * **วิธีแก้เด็ดขาด:** สำหรับแอปบัญชีที่รันแบบ Local เครื่องใครเครื่องมันแบบนี้ **พนักงานไม่มีความจำเป็นต้องกดปุ่ม Logout ครับ** ดังนั้นใน Phase 4 ผมได้เพิ่มคำสั่งให้เราเข้าไป **"ลบ/ซ่อนปุ่ม Logout"** ในหน้า Settings ทิ้งไปเลยครับ! พนักงานจะได้เผลอไปกดไม่ได้ และแอปก็จะ Auto-login ผ่านฉลุยตลอดกาลครับ (สำหรับตอนนี้ที่คุณติดหน้า Login อยู่ ให้กดปุ่ม Start Eigent ไปรอบนึงก่อนครับเพื่อสร้าง Session ใหม่)
 
 ---
 
@@ -35,9 +34,6 @@ This plan breaks down **Week 2 (Meter Reader Copilot)** into detailed, step-by-s
      "monthly-calc": "คำนวณบิลเดือนนี้",
      "monthly-calc-prompt": "รันกระบวนการทำบิลประจำเดือน {CURRENT_MONTH} กรุณาเริ่มได้เลย"
      ```
-
-**Testing (Phase 1):**
-- *Manual:* Restart the server. Verify "Accounting Copilot" is listed in the available agents. Click the "คำนวณบิลเดือนนี้" suggestion button and verify it triggers.
 
 ---
 
@@ -82,25 +78,21 @@ CRITICAL: All your chat messages and the final summary MUST be in Thai.
 ---
 
 ### Phase 4: App Shell Modifications (Stop Button & Login Bypass)
-**Objective:** Improve the user experience so the accountant doesn't face technical barriers like login screens or runaway AI processes.
+**Objective:** Improve the user experience so the accountant doesn't face technical barriers like login screens, accidental logouts, or runaway AI processes.
 
 **1. Login Bypass (`src/pages/Login.tsx`):**
    - Add a `useEffect` hook that triggers immediately when the component mounts.
    - It will call `handleAutoLogin()` automatically if the app is in local mode, skipping the UI rendering of the login page and redirecting directly to `/chat`.
-   ```javascript
-   // Pseudocode for src/pages/Login.tsx
-   useEffect(() => {
-       if (isLocalMode) {
-           handleAutoLogin();
-       }
-   }, []);
-   ```
 
-**2. Persistent Stop Button (`src/components/ProjectChatContainer/index.tsx` & `ChatBox`):**
+**2. Remove Logout Button (`src/pages/Setting/General.tsx`):**
+   - Find the `<Button onClick={() => authStore.logout()}>` block.
+   - Comment it out or remove it. This prevents the accountant from accidentally destroying their session, ensuring the `auto-login` hook in `Login.tsx` never fails on subsequent restarts.
+
+**3. Persistent Stop Button (`src/components/ProjectChatContainer/index.tsx` & `ChatBox`):**
    - Locate the UI element for the `handleSkip` function (Stop task).
    - Ensure it is persistently rendered floating near the chat input or within the active Task Card whenever `task.status === 'running' || task.status === 'pending'`.
    - Add clear Thai text: "🛑 หยุดการทำงาน" to make it user-friendly.
 
 **Testing (Phase 4):**
-- *Manual (Login):* Open the app in incognito or clear local storage. Verify that the app briefly loads and jumps straight to the dashboard without asking for an email/password.
+- *Manual (Login & Logout):* Open the app, verify it bypasses login. Go to Settings and verify there is NO logout button available.
 - *Manual (Stop Button):* Start the Monthly Calculation process. While the AI is processing the Python scripts, locate the "🛑 หยุดการทำงาน" button, click it, and verify the AI halts its process and logs a cancellation.
