@@ -29,6 +29,7 @@ from pydash import chain
 
 from app.agent.agent_model import agent_model
 from app.agent.factory import (
+    accounting_agent,
     browser_agent,
     developer_agent,
     document_agent,
@@ -2262,6 +2263,7 @@ the current date.
             document_agent(options),
             asyncio.to_thread(multi_modal_agent, options),
             mcp_agent(options),
+            asyncio.to_thread(accounting_agent, options),
         )
     except Exception as e:
         logger.error(
@@ -2284,6 +2286,7 @@ the current date.
         documenter,
         multi_modaler,
         mcp,
+        accountant,
     ) = results
 
     coordinator_agent, task_agent = coord_task_agents
@@ -2343,6 +2346,14 @@ the current date.
         "analyze images and audio, transcribe speech, download videos, and "
         "generate new images from text prompts.",
         multi_modaler,
+    )
+    workforce.add_single_agent_worker(
+        "Accounting Copilot: A specialist in monthly billing automation. "
+        "It can process meter reading photos (OCR), update Excel reports, "
+        "run Python scripts for file management, and perform QC checks. "
+        "Use this agent for tasks related to electricity/water meter billing, "
+        "Excel report updates, and monthly billing workflows.",
+        accountant,
     )
 
     return workforce, mcp

@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
+import os as _os
 import platform
 
 from camel.messages import BaseMessage
@@ -31,6 +32,22 @@ from app.agent.utils import NOW_STR
 from app.model.chat import Chat
 from app.service.task import Agents
 from app.utils.file_utils import get_working_directory
+
+
+def _get_copilot_data_dir():
+    # backend/app/agent/factory/accounting.py
+    # -> up 4 levels -> project root -> copilot_data
+    factory_dir = _os.path.dirname(_os.path.abspath(__file__))
+    project_root = _os.path.dirname(  # project root
+        _os.path.dirname(  # backend/
+            _os.path.dirname(  # backend/app/
+                _os.path.dirname(  # backend/app/agent/
+                    factory_dir  # backend/app/agent/factory/
+                )
+            )
+        )
+    )
+    return _os.path.join(project_root, "copilot_data")
 
 
 def accounting_agent(options: Chat):
@@ -97,11 +114,16 @@ def accounting_agent(options: Chat):
         SkillToolkit.toolkit_name(),
     ]
 
+    copilot_data_dir = _get_copilot_data_dir()
+    scripts_dir = _os.path.join(_os.path.dirname(copilot_data_dir), "scripts")
+
     system_message = ACCOUNTING_SYS_PROMPT.format(
         platform_system=platform.system(),
         platform_machine=platform.machine(),
         working_directory=working_directory,
         now_str=NOW_STR,
+        copilot_data_dir=copilot_data_dir,
+        scripts_dir=scripts_dir,
     )
 
     system_message = attach_remote_sub_agent_if_enabled(

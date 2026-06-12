@@ -20,7 +20,10 @@ from PIL import Image, ImageEnhance
 
 # Configuration
 DOWNLOADS_DIR = os.path.expanduser("~/Downloads")
-BASE_DATA_DIR = "/Users/hare/meen/testai-cowork/copilot_data"
+# Calculate BASE_DATA_DIR from script location (scripts/ is in project root)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+BASE_DATA_DIR = os.path.join(PROJECT_ROOT, "copilot_data")
 PROCESSED_DIR = os.path.join(BASE_DATA_DIR, "meter-photos/processed")
 ARCHIVE_DIR = os.path.join(BASE_DATA_DIR, "meter-photos/archive")
 MAX_SIZE = (1024, 1024)
@@ -33,9 +36,9 @@ def fetch_and_process_images():
     os.makedirs(target_processed_dir, exist_ok=True)
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
     
-    # Regex for DD-MM-YYYY or DD-MM-YYYY #1 (common LINE download formats)
-    # Also handles DD_MM_YYYY or DD.MM.YYYY
-    folder_pattern = re.compile(r'^(\d{1,2})[-._ ](\d{1,2})[-._ ](\d{4})(?: #1)?$')
+    # Regex for LINE download formats: DD/MM/YYYY, DD-MM-YYYY, etc.
+    # Supports both AD (2026) and BE (2569) years.
+    folder_pattern = re.compile(r'^(\d{1,2})[/\-._ ](\d{1,2})[/\-._ ](\d{4})(?: #\d+)?$')
     
     count = 0
     # Find matching folders in Downloads
@@ -43,7 +46,8 @@ def fetch_and_process_images():
         item_path = os.path.join(DOWNLOADS_DIR, item)
         if os.path.isdir(item_path) and folder_pattern.match(item):
             print(f"Found matching folder: {item}")
-            unit_type = "water" if "#1" in item else "electric"
+            # Identify unit_type: folders with #1, #2 etc are usually water
+            unit_type = "water" if re.search(r'#\d+', item) else "electric"
             
             for file in os.listdir(item_path):
                 if file.lower().endswith(('.png', '.jpg', '.jpeg')):
